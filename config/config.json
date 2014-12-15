@@ -1,0 +1,6 @@
+{
+  "pages":["index","test"],
+  "version":1,
+  "buildMode":"develop",
+  "packPreviewMode":"compress"
+}
