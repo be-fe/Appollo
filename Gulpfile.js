@@ -14,6 +14,7 @@ var buildMode = config.buildMode;
 var previewMode = config.previewMode;
 var pages = config.pages;
 var path = require('path');
+var es=require("event-stream");
 function buildDevPages(pages) {
     for (var i = 0, l = pages.length; i < l; i++) {
         var page = pages[i];
@@ -29,6 +30,8 @@ function buildDevPage(page) {
 
     var baseimg = gulp.src(['./src/common/imgs/*.*'], {read: false});
     var pageimg = gulp.src(['./src/pages/' + page + '/imgs/*.*'], {read: false});
+    basejs.pipe(uglify()).pipe(gulp.dest('./build'));
+    return;
     var pageUrl = './build/develop/pages/' + page;
     var fileToMove = ["./src/pages/" + page + "/*", "./src/pages/" + page + "/**/*", "!./src/pages/" + page + "/index.html"];
     gulp.src(fileToMove).pipe(gulp.dest(pageUrl));
