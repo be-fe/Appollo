@@ -1,5 +1,5 @@
 ##Mobile Framework
--传统开发方式弊端：
+#传统开发方式弊端：
 
         每次开发都得新建文件夹目录
         
@@ -13,9 +13,10 @@
         
         html结构与js代码混在一起，不便于看清结构
 
--此框架解决以上问题，并构建基本的js框架，以及统计监控等,基于gulp实现，目前还在开发中
+#此框架解决以上问题，并构建基本的js框架，以及统计监控等,基于gulp实现，目前还在开发中
 
--目录结构为：
+#目录结构为：
+
         config/
                 config.json(项目配置文件)
                 
@@ -70,11 +71,11 @@
                                 index.html
                                 
 
--使用方法：
+#使用方法：
 
--使用gulp new --name erp
+##使用gulp new --name erp
         可以创建一个新项目erp,也可以通过config中配置pages，然后通过gulp new进行多项文件夹创建
 
--使用gulp watch 可以编译开发环境并进行预览
+##使用gulp watch 可以编译开发环境并进行预览
 
--通过config.json配置相关参数
+##通过config.json配置相关参数
