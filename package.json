@@ -29,6 +29,7 @@
     "gulp-md5-plus": "~0.1.5",
     "gulp-imagemin": "~2.0.0",
     "cssmin": "~0.4.2",
-    "gulp-cssmin": "~0.1.6"
+    "gulp-cssmin": "~0.1.6",
+    "q": "~1.1.2"
   }
 }

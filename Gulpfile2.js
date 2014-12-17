@@ -13,7 +13,6 @@ var buildMode = config.buildMode;
 var previewMode = config.previewMode;
 var pages = config.pages;
 var basePath = config.path;
-var curPage = config.developPage;
 
 var argv = require("yargs").argv;
 var gulpif = require("gulp-if");
@@ -30,14 +29,17 @@ var md52 = require('gulp-md5-plus');
 var cssmin = require('gulp-cssmin');
 var imagemin = require('gulp-imagemin');
 var Q = require("q");
-var bd = {};
+function buildDevPages(pages) {
+    for (var i = 0, l = pages.length; i < l; i++) {
+        var page = pages[i];
+        buildPage(page);
+    }
+}
 function getMd5(str, len) {
+    //var str = fs.readFileSync(p, 'utf-8');
     var md5um = crypto.createHash('md5');
     md5um.update(str, 'utf-8');
     return md5um.digest('hex').substring(0, len);
-}
-function reloadPage(page) {
-    gulp.src(basePath.pagebuild + page + '/*.html').pipe(connect.reload());
 }
 function createMd5() {
     var Stream = require("stream");
@@ -64,6 +66,15 @@ function createMd5() {
     return stream;
 
 }
+
+function reloadPage(page) {
+    gulp.src(basePath.pagebuild + page + '/*.html').pipe(connect.reload());
+}
+function newPage(pageName) {
+    var fileToMove = [basePath.pagesrc + "_example/*", basePath.pagesrc + "_example/**/*"];
+    gulp.src(fileToMove).pipe(gulp.dest(basePath.pagesrc + pageName));
+}
+
 function getURLList(type, page) {
     if (type == 'html') {
         return {
@@ -79,16 +90,24 @@ function getURLList(type, page) {
     }
     return urls;
 }
-function concatFile(type, pageurl) {
-    var func = type === 'css' ? cssmin : uglify;
-    if (type === "imgs") {
-        gulp.src(pageurl.pagesrc).pipe(imagemin()).pipe(gulp.dest(pageurl.pagebuild));
-        gulp.src(pageurl.commonsrc).pipe(imagemin()).pipe(gulp.dest(pageurl.commonbuild));
-        return;
-    }
-    gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func()).pipe(createMd5()).pipe(gulp.dest(pageurl.pagebuild));
 
-    gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func()).pipe(createMd5()).pipe(gulp.dest(pageurl.commonbuild));
+function buildPage(page) {
+    var cssurl = getURLList('css', page);
+    var jsurl = getURLList('js', page);
+    var imgurl = getURLList('imgs', page);
+    var htmlurl = getURLList('html', page);
+
+    concatFile('css', cssurl);
+    concatFile('js', jsurl);
+    concatFile('imgs', imgurl);
+    setTimeout(function () {
+        compile({
+            cssurl: cssurl,
+            jsurl: jsurl,
+            imgurl: imgurl,
+            htmlurl: htmlurl
+        });
+    }, 2000);
 
 }
 function compile(urls) {
@@ -115,42 +134,58 @@ function compile(urls) {
     })).pipe(gulp.dest(htmlurl.pagebuild));
     return;
 }
-function buildPage(page) {
-    var cssurl = getURLList('css', page);
-    var jsurl = getURLList('js', page);
-    var imgurl = getURLList('imgs', page);
-    var htmlurl = getURLList('html', page);
 
-    concatFile('css', cssurl);
-    concatFile('js', jsurl);
-    concatFile('imgs', imgurl);
-    if (bd.iscompile) clearTimeout(bd.iscompile);
-    bd.iscompile = setTimeout(function () {
-        compile({
-            cssurl: cssurl,
-            jsurl: jsurl,
-            imgurl: imgurl,
-            htmlurl: htmlurl
-        });
-    }, 2000);
+function concatFile(type, pageurl) {
+    var func = type === 'css' ? cssmin : uglify;
+    if (type === "imgs") {
+        gulp.src(pageurl.pagesrc).pipe(imagemin()).pipe(gulp.dest(pageurl.pagebuild));
+        gulp.src(pageurl.commonsrc).pipe(imagemin()).pipe(gulp.dest(pageurl.commonbuild));
+        return;
+    }
+    gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func()).pipe(createMd5()).pipe(gulp.dest(pageurl.pagebuild));
+
+    gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func()).pipe(createMd5()).pipe(gulp.dest(pageurl.commonbuild));
 
 }
-gulp.task("clean", function () {
-    var page = curPage;
+function cleanPage(page) {
     var pageUrl = basePath.pagebuild + page;
-    var stream1 = gulp.src(basePath.commonbuild, {read: false}).pipe(clean());
-    var stream2 = gulp.src(pageUrl, {read: false}).pipe(clean());
-    return merge(stream1, stream2);
+    return gulp.src(pageUrl, {read: false}).pipe(clean());
+}
+
+gulp.task('new', function () {
+    var pageName = argv.name;
+    if (!pageName) {
+        for (var i = 0, l = pages.length; i < l; i++) {
+            pageName = pages[i];
+            var fileurl = basePath.pagesrc + pageName;
+            Path.exists(fileurl, function (exists) {
+                if (!exists) {
+                    newPage(pageName);
+                }
+            });
+        }
+    } else {
+        newPage(pageName);
+    }
 });
-gulp.task("move", ["clean"], function () {
-    var page = curPage;
+gulp.task('cleanPage', function () {
+    var page = argv.name;
+    console.log(page);
+    return cleanPage(page);
+
+});
+gulp.task('cleancommon', function () {
+    return gulp.src(basePath.commonbuild, {read: false}).pipe(clean());
+});
+gulp.task('move', ['cleanPage', 'cleancommon'], function () {
+    var page = argv.name;
     var htmlurl = getURLList('html', page);
     return gulp.src(htmlurl.pagesrc).pipe(gulp.dest(htmlurl.pagebuild));
 });
-gulp.task("build", ['move'], function () {
-    buildPage(curPage);
-});
-gulp.task("server", function () {
+
+
+
+gulp.task('start', function () {
     if (!config.startServer) return;
     connect.server({
         port: 8888,
@@ -159,17 +194,22 @@ gulp.task("server", function () {
         addRootSlash: false
     });
 });
-gulp.task("watch", function () {
-    gulp.run('server');
-    var staticSrc = [basePath.pagesrc + curPage + '/*', basePath.pagesrc + curPage + '/**/*', basePath.pagesrc + curPage + '/**/**/*'];
-    gulp.watch(staticSrc, function () {
-        gulp.run('build');
-        if(bd.isRefresh) clearTimeout(bd.isRefresh);
-        bd.isRefresh=setTimeout(function () {
-            reloadPage(curPage);
-        }, 3000);
+
+gulp.task("watch",['start'], function () {
+    var currentPage = argv.name;
+    var staticSrc = [basePath.pagesrc + currentPage + '/*', basePath.pagesrc + currentPage + '/**/*', basePath.pagesrc + currentPage + '/**/**/*'];
+    gulp.watch(staticSrc,function () {
+        gulp.run("move");
+        buildPage(currentPage);
+    });
+    return;
+    var buildSrc = [basePath.pagebuild + currentPage + '/*.html'];
+    gulp.watch(buildSrc, function () {
+        reloadPage(currentPage);
     });
 
 });
+
+
 
 

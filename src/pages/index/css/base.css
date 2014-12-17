@@ -1,11 +1,21 @@
 .div1 {
-    background: url("../pages/index/imgs/nav1.png") no-repeat 0 0 #ccc;
+    background: url("../imgs/nav1.png") no-repeat 0 0 #ccc;
 }
 
 .div2 {
-    background: url("../pages/index/imgs/b-car.png") no-repeat 0 0 #ccc;
+    background: url("../imgs/b-car.png") no-repeat 0 0 #ccc;
 }
 
 .div3 {
-    background: url("../pages/index/imgs/small-bell-icon.png") no-repeat 0 0 #ccc;
+    background: url("../imgs/small-bell-icon.png") no-repeat 0 0 #ccc;
+    width:100px;
+    background-size: 10px 20px;
+    -webkit-background-size:20px 30px;
+    background-color:yellowgreen;
+    left:12px;
+    color:blue;
+    width:300px;
+    height:200px;
+
+
 }
