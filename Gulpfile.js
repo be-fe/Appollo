@@ -81,14 +81,15 @@ function getURLList(type, page) {
 }
 function concatFile(type, pageurl) {
     var func = type === 'css' ? cssmin : uglify;
+    var opts = type === 'css' ? {'noAdvanced': true} : {};
     if (type === "imgs") {
         gulp.src(pageurl.pagesrc).pipe(imagemin()).pipe(gulp.dest(pageurl.pagebuild));
         gulp.src(pageurl.commonsrc).pipe(imagemin()).pipe(gulp.dest(pageurl.commonbuild));
         return;
     }
-    gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func()).pipe(createMd5()).pipe(gulp.dest(pageurl.pagebuild));
+    gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func(opts)).pipe(createMd5()).pipe(gulp.dest(pageurl.pagebuild));
 
-    gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func()).pipe(createMd5()).pipe(gulp.dest(pageurl.commonbuild));
+    gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func(opts)).pipe(createMd5()).pipe(gulp.dest(pageurl.commonbuild));
 
 }
 function compile(urls) {
