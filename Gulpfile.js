@@ -31,6 +31,8 @@ var cssmin = require('gulp-cssmin');
 var imagemin = require('gulp-imagemin');
 var Q = require("q");
 var bd = {};
+var bdutls = require("./utils.js");
+
 function getMd5(str, len) {
     var md5um = crypto.createHash('md5');
     md5um.update(str, 'utf-8');
