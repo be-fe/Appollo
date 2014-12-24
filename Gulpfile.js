@@ -5,8 +5,17 @@ var jshint = require('gulp-jshint');
 var inject = require("gulp-inject");
 var staticsource = "";
 var merge = require('merge-stream');
-var streamqueue = require('streamqueue');
 var clean = require('gulp-clean');
+var Path = require('path');
+var uglify = require("gulp-uglify");
+var concat = require("gulp-concat");
+var fs = require("fs");
+var crypto = require('crypto');
+var cssmin = require('gulp-cssmin');
+var imagemin = require('gulp-imagemin');
+var Stream = require("stream");
+var Q = require("q");
+var ejs = require("ejs");
 
 var config = require("./config/config.json");
 var buildMode = config.buildMode;
@@ -16,20 +25,8 @@ var basePath = config.path;
 var curPage = config.developPage;
 
 var argv = require("yargs").argv;
-var gulpif = require("gulp-if");
+var inlineHtmlReg = /(__inline\(['"])([^'"]+)(['"]\))/g;
 
-var Path = require('path');
-var es = require("event-stream");
-var uglify = require("gulp-uglify");
-var concat = require("gulp-concat");
-var md5 = require("MD5");
-var fs = require("fs");
-var crypto = require('crypto');
-var rename = require("gulp-rename");
-var md52 = require('gulp-md5-plus');
-var cssmin = require('gulp-cssmin');
-var imagemin = require('gulp-imagemin');
-var Q = require("q");
 var bd = {};
 var bdutls = require("./utils.js");
 
@@ -41,30 +38,54 @@ function getMd5(str, len) {
 function reloadPage(page) {
     gulp.src(basePath.pagebuild + page + '/*.html').pipe(connect.reload());
 }
-function createMd5() {
-    var Stream = require("stream");
+
+function calcMd5(chunk, parsedPath) {
+    var _md5 = getMd5(chunk.contents, 6);
+    var path = parsedPath.basename + "_" + _md5 + parsedPath.extname;
+    chunk.path = Path.join(chunk.base, path);
+    return chunk;
+}
+function replaceHTML(chunk, encoding) {
+    var data = chunk.contents.toString(encoding);
+    var basePath = bdutls.realPath(chunk.base);
+    data = data.replace(inlineHtmlReg, function (m, $1, $2, $3) {
+        var _path = bdutls.absPath($2, basePath);
+        var text = fs.readFileSync(_path, encoding);
+        text = bdutls.replaceQuotes(text);
+        return "'" + text + "'";
+    });
+    var buf = new Buffer(data);
+    chunk.contents = buf;
+    return chunk;
+}
+gulp.task('lh',function(){
+    gulp.src("./src/pages/index/js/index.js").pipe(compile()).pipe(gulp.dest("./build"));
+});
+function compile() {
     var stream = new Stream.Transform({objectMode: true});
+    stream._transform = function (chunk, encoding, done) {
+        var parsedPath = parsePath(chunk.relative);
+        if (parsedPath.extname == ".js") {
+            chunk = replaceHTML(chunk, encoding);
+        }
+        chunk = calcMd5(chunk, parsedPath);
+        this.push(chunk);
 
-    function parsePath(path) {
-        var extname = Path.extname(path);
-        return {
-            dirname: Path.dirname(path),
-            basename: Path.basename(path, extname),
-            extname: extname
-        };
-    }
-
-    stream._transform = function (file, unused, callback) {
-        var parsedPath = parsePath(file.relative);
-        var path;
-        var _md5 = getMd5(file.contents, 6);
-        path = parsedPath.basename + "_" + _md5 + parsedPath.extname;
-        file.path = Path.join(file.base, path);
-        callback(null, file);
+        done(null, chunk);
+    };
+    stream._flush = function (callback) {
 
     };
     return stream;
+}
 
+function parsePath(path) {
+    var extname = Path.extname(path);
+    return {
+        dirname: Path.dirname(path),
+        basename: Path.basename(path, extname),
+        extname: extname
+    };
 }
 function getURLList(type, page) {
     if (type == 'html') {
@@ -87,14 +108,15 @@ function concatFile(type, pageurl) {
     if (type === "imgs") {
         gulp.src(pageurl.pagesrc).pipe(imagemin()).pipe(gulp.dest(pageurl.pagebuild));
         gulp.src(pageurl.commonsrc).pipe(imagemin()).pipe(gulp.dest(pageurl.commonbuild));
-        return;
-    }
-    gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func(opts)).pipe(createMd5()).pipe(gulp.dest(pageurl.pagebuild));
 
-    gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func(opts)).pipe(createMd5()).pipe(gulp.dest(pageurl.commonbuild));
+    } else {
+        gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.pagebuild));
+
+        gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.commonbuild));
+    }
 
 }
-function compile(urls) {
+function insertStatic(urls) {
     var cssurl = urls.cssurl;
     var jsurl = urls.jsurl;
     var imgurl = urls.imgurl;
@@ -129,13 +151,13 @@ function buildPage(page) {
     concatFile('imgs', imgurl);
     if (bd.iscompile) clearTimeout(bd.iscompile);
     bd.iscompile = setTimeout(function () {
-        compile({
+        insertStatic({
             cssurl: cssurl,
             jsurl: jsurl,
             imgurl: imgurl,
             htmlurl: htmlurl
         });
-    }, 2000);
+    }, 4000);
 
 }
 gulp.task("clean", function () {
@@ -156,23 +178,31 @@ gulp.task("build", ['move'], function () {
 gulp.task("server", function () {
     if (!config.startServer) return;
     connect.server({
-        port: 8888,
+        port: 8003,
         root: "",
         livereload: true,
         addRootSlash: false
     });
+    var open = require('open');
+    open('http://127.0.0.1:8003/build/develop/pages/'+curPage);
 });
 gulp.task("watch", function () {
     gulp.run('server');
     var staticSrc = [basePath.pagesrc + curPage + '/*', basePath.pagesrc + curPage + '/**/*', basePath.pagesrc + curPage + '/**/**/*'];
     gulp.watch(staticSrc, function () {
         gulp.run('build');
-        if(bd.isRefresh) clearTimeout(bd.isRefresh);
-        bd.isRefresh=setTimeout(function () {
+        if (bd.isRefresh) clearTimeout(bd.isRefresh);
+        bd.isRefresh = setTimeout(function () {
             reloadPage(curPage);
-        }, 3000);
+        }, 4000);
     });
 
 });
+gulp.task('open', function () {
+    var open = require('open');
+    open('http://127.0.0.1:8003/');
+});
+
+
 
 

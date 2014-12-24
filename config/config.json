@@ -4,7 +4,7 @@
     "test"
   ],
   "version": 1,
-  "buildMode": "develop",
+  "buildMode": 1,
   "packPreviewMode": "compress",
   "path": {
     "pagesrc": "./src/pages/",
