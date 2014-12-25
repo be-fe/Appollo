@@ -58,7 +58,7 @@ function replaceHTML(chunk, encoding) {
     chunk.contents = buf;
     return chunk;
 }
-gulp.task('lh',function(){
+gulp.task('lh', function () {
     gulp.src("./src/pages/index/js/index.js").pipe(compile()).pipe(gulp.dest("./build"));
 });
 function compile() {
@@ -184,7 +184,7 @@ gulp.task("server", function () {
         addRootSlash: false
     });
     var open = require('open');
-    open('http://127.0.0.1:8003/build/develop/pages/'+curPage);
+    open('http://127.0.0.1:8003/build/develop/pages/' + curPage);
 });
 gulp.task("watch", function () {
     gulp.run('server');
@@ -198,10 +198,33 @@ gulp.task("watch", function () {
     });
 
 });
-gulp.task('open', function () {
-    var open = require('open');
-    open('http://127.0.0.1:8003/');
+function newPage(pageName) {
+    var fileToMove = ["./src/pages/_example/*", "./src/pages/_example/**/*"];
+    gulp.src(fileToMove).pipe(gulp.dest('./src/pages/' + pageName));
+}
+gulp.task('new', function () {
+    var pageName = argv.name;
+    if (!pageName) {
+        for (var i = 0, l = pages.length; i < l; i++) {
+            pageName = pages[i];
+            var fileurl = './src/pages/' + pageName;
+            path.exists(fileurl, function (exists) {
+                if (!exists) {
+                    newPage(pageName);
+                }
+            });
+        }
+    } else {
+        newPage(pageName);
+    }
 });
+gulp.task('test', function () {
+    gulp.src('./sample/type.css')
+    .pipe(cssmin())
+    .pipe(function(){})
+    .pipe(gulp.dest('./sample'));
+});
+
 
 
 
