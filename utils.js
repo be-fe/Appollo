@@ -17,10 +17,11 @@ module.exports = {
         return path;
     },
     replaceQuotes: function (text) {
-        text = text.replace(/'/g, '"');
-        text = text.replace(/[\n\r\t]/g, '');
+        text = text
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/[\n\r\t]/g, '');
         return text;
     }
-
 
 };

@@ -5,7 +5,6 @@ var main=123;
 console.log("index.js--load");
 var tpl=__inline("../html/_head.html");
 var tpl2=__inline("../html/_content.html");
-
-console.log(ejs.render(tpl2,{
+document.querySelector(".div3").innerHTML=ejs.render(tpl2,{
     title:"this is ejs test"
-}));
+});

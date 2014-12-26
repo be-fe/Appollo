@@ -218,10 +218,15 @@ gulp.task('new', function () {
         newPage(pageName);
     }
 });
+var through = require('through2');
 gulp.task('test', function () {
-    gulp.src('./sample/type.css')
+    gulp.src('./src/pages/index/css/index.css')
     .pipe(cssmin())
-    .pipe(function(){})
+    .pipe(function(){
+        return through(function(line){
+            console.log(line);
+        });
+    })
     .pipe(gulp.dest('./sample'));
 });
 
