@@ -13,5 +13,5 @@
     "commonbuild": "./build/develop/common/"
   },
   "startServer":1,
-  "developPage":"index"
+  "developPage":"test"
 }

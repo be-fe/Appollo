@@ -182,15 +182,16 @@ gulp.task("server", function () {
 });
 gulp.task("watch", function () {
     gulp.run('server');
+    gulp.run('build');
     var staticSrc = [basePath.pagesrc + curPage + '/*', basePath.pagesrc + curPage + '/**/*', basePath.pagesrc + curPage + '/**/**/*'];
-    gulp.watch(staticSrc, function () {
-        gulp.run('build');
-        if (bd.isRefresh) clearTimeout(bd.isRefresh);
-        bd.isRefresh = setTimeout(function () {
-            reloadPage(curPage);
-        }, 4000);
+    var commonSrc = [basePath.commonsrc + '/*', basePath.commonsrc + '/**/*', basePath.commonsrc + '/**/**/*'];
+    gulp.watch(staticSrc.concat(commonSrc), function () {
+        gulp.run('reload');
     });
 
+});
+gulp.task('reload', ['build'], function () {
+    reloadPage(curPage);
 });
 function newPage(pageName) {
     var fileToMove = ["./src/pages/_example/*", "./src/pages/_example/**/*"];
