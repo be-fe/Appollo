@@ -30,6 +30,11 @@ var inlineHtmlReg = /(__inline\(['"])([^'"]+)(['"]\))/g;
 var bd = {};
 var bdutls = require("./utils.js");
 
+var cssurl = getURLList('css', curPage);
+var jsurl = getURLList('js', curPage);
+var imgurl = getURLList('imgs', curPage);
+var htmlurl = getURLList('html', curPage);
+
 function getMd5(str, len) {
     var md5um = crypto.createHash('md5');
     md5um.update(str, 'utf-8');
@@ -70,11 +75,7 @@ function compile() {
         }
         chunk = calcMd5(chunk, parsedPath);
         this.push(chunk);
-
         done(null, chunk);
-    };
-    stream._flush = function (callback) {
-
     };
     return stream;
 }
@@ -95,9 +96,9 @@ function getURLList(type, page) {
         }
     }
     var urls = {
-        pagesrc: [basePath.pagesrc + page + "/" + type + "/*"],
+        pagesrc:     basePath.pagesrc + page + "/" + type + "/*",
         pagebuild:   basePath.pagebuild + page + "/" + type + "/",
-        commonsrc: [basePath.commonsrc + type + "/*"],
+        commonsrc:   basePath.commonsrc + type + "/*",
         commonbuild: basePath.commonbuild + type + "/"
     }
     return urls;
@@ -106,22 +107,19 @@ function concatFile(type, pageurl) {
     var func = type === 'css' ? cssmin : uglify;
     var opts = type === 'css' ? {'noAdvanced': true} : {};
     if (type === "imgs") {
-        gulp.src(pageurl.pagesrc).pipe(imagemin()).pipe(gulp.dest(pageurl.pagebuild));
-        gulp.src(pageurl.commonsrc).pipe(imagemin()).pipe(gulp.dest(pageurl.commonbuild));
+        return merge(
+        gulp.src(pageurl.pagesrc).pipe(imagemin()).pipe(gulp.dest(pageurl.pagebuild)),
+        gulp.src(pageurl.commonsrc).pipe(imagemin()).pipe(gulp.dest(pageurl.commonbuild))
+        );
 
     } else {
-        gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.pagebuild));
-
-        gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.commonbuild));
+        return merge(gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.pagebuild)),
+        gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.commonbuild)));
     }
 
 }
-function insertStatic(urls) {
-    var cssurl = urls.cssurl;
-    var jsurl = urls.jsurl;
-    var imgurl = urls.imgurl;
-    var htmlurl = urls.htmlurl;
-    gulp.src(htmlurl.pagebuild + "index.html").pipe(inject(gulp.src([jsurl.pagebuild + "*.js"]), {
+function insertStatic() {
+    return gulp.src(htmlurl.pagebuild + "index.html").pipe(inject(gulp.src([jsurl.pagebuild + "*.js"]), {
         relative: true,
         name: 'pagejs',
         addPrefix: staticsource
@@ -138,28 +136,26 @@ function insertStatic(urls) {
         name: 'basecss',
         addPrefix: staticsource
     })).pipe(gulp.dest(htmlurl.pagebuild));
-    return;
 }
-function buildPage(page) {
-    var cssurl = getURLList('css', page);
-    var jsurl = getURLList('js', page);
-    var imgurl = getURLList('imgs', page);
-    var htmlurl = getURLList('html', page);
 
-    concatFile('css', cssurl);
-    concatFile('js', jsurl);
-    concatFile('imgs', imgurl);
-    if (bd.iscompile) clearTimeout(bd.iscompile);
-    bd.iscompile = setTimeout(function () {
-        insertStatic({
-            cssurl: cssurl,
-            jsurl: jsurl,
-            imgurl: imgurl,
-            htmlurl: htmlurl
-        });
-    }, 4000);
+gulp.task('concat', ['move'], function () {
+    console.log('concat');
+    return merge(
+    concatFile('css', cssurl),
+    concatFile('js', jsurl),
+    concatFile('imgs', imgurl)
+    );
 
-}
+});
+gulp.task('build', ['concat'], function () {
+    console.log('build');
+    return insertStatic({
+        cssurl: cssurl,
+        jsurl: jsurl,
+        imgurl: imgurl,
+        htmlurl: htmlurl
+    });
+});
 gulp.task("clean", function () {
     var page = curPage;
     var pageUrl = basePath.pagebuild + page;
@@ -172,9 +168,7 @@ gulp.task("move", ["clean"], function () {
     var htmlurl = getURLList('html', page);
     return gulp.src(htmlurl.pagesrc).pipe(gulp.dest(htmlurl.pagebuild));
 });
-gulp.task("build", ['move'], function () {
-    buildPage(curPage);
-});
+
 gulp.task("server", function () {
     if (!config.startServer) return;
     connect.server({
@@ -222,8 +216,8 @@ var through = require('through2');
 gulp.task('test', function () {
     gulp.src('./src/pages/index/css/index.css')
     .pipe(cssmin())
-    .pipe(function(){
-        return through(function(line){
+    .pipe(function () {
+        return through(function (line) {
             console.log(line);
         });
     })
