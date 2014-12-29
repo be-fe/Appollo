@@ -41,7 +41,7 @@ function getMd5(str, len) {
     return md5um.digest('hex').substring(0, len);
 }
 function reloadPage(page) {
-    gulp.src(basePath.pagebuild + page + '/*.html').pipe(connect.reload());
+    gulp.src("."+basePath.build + page + '/*.html').pipe(connect.reload());
 }
 
 function calcMd5(chunk, parsedPath) {
@@ -52,9 +52,9 @@ function calcMd5(chunk, parsedPath) {
 }
 function replaceHTML(chunk, encoding) {
     var data = chunk.contents.toString(encoding);
-    var basePath = bdutls.realPath(chunk.base);
+    var url = bdutls.realPath(chunk.base);
     data = data.replace(inlineHtmlReg, function (m, $1, $2, $3) {
-        var _path = bdutls.absPath($2, basePath);
+        var _path = bdutls.absPath($2, url);
         var text = fs.readFileSync(_path, encoding);
         text = bdutls.replaceQuotes(text);
         return "'" + text + "'";
@@ -63,9 +63,7 @@ function replaceHTML(chunk, encoding) {
     chunk.contents = buf;
     return chunk;
 }
-gulp.task('lh', function () {
-    gulp.src("./src/pages/index/js/index.js").pipe(compile()).pipe(gulp.dest("./build"));
-});
+
 function compile() {
     var stream = new Stream.Transform({objectMode: true});
     stream._transform = function (chunk, encoding, done) {
@@ -91,15 +89,15 @@ function parsePath(path) {
 function getURLList(type, page) {
     if (type == 'html') {
         return {
-            pagesrc:   basePath.pagesrc + page + "/index.html",
-            pagebuild: basePath.build + page + "/"
+            pagesrc:   "." + basePath.pagesrc + page + "/index.html",
+            pagebuild: "." + basePath.build + page + "/"
         }
     }
     var urls = {
-        pagesrc:     basePath.pagesrc + page + "/" + type + "/*",
-        pagebuild:   basePath.staticbuild+ "/" + type + "/",
-        commonsrc:   basePath.commonsrc + type + "/*",
-        commonbuild: basePath.staticbuild + type + "/"
+        pagesrc:     "." + basePath.pagesrc + page + "/" + type + "/*",
+        pagebuild:   "." + basePath.staticbuild + "/" + type + "/",
+        commonsrc:   "." + basePath.commonsrc + type + "/*",
+        commonbuild: "." + basePath.staticbuild + type + "/"
     }
     return urls;
 }
@@ -113,13 +111,13 @@ function concatFile(type, pageurl) {
         );
 
     } else {
-        return merge(gulp.src(pageurl.pagesrc).pipe(concat("main." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.pagebuild)),
+        return merge(gulp.src(pageurl.pagesrc).pipe(concat(curPage + "." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.pagebuild)),
         gulp.src(pageurl.commonsrc).pipe(concat("base." + type)).pipe(func(opts)).pipe(compile()).pipe(gulp.dest(pageurl.commonbuild)));
     }
 
 }
 function insertStatic() {
-    return gulp.src(htmlurl.pagebuild + "index.html").pipe(inject(gulp.src([jsurl.pagebuild + "main*"]), {
+    return gulp.src(htmlurl.pagebuild + "index.html").pipe(inject(gulp.src([jsurl.pagebuild + curPage + "*"]), {
         relative: true,
         name: 'pagejs',
         addPrefix: staticsource
@@ -127,7 +125,7 @@ function insertStatic() {
         relative: true,
         name: 'basejs',
         addPrefix: staticsource
-    })).pipe(inject(gulp.src([cssurl.pagebuild + "main*"]), {
+    })).pipe(inject(gulp.src([cssurl.pagebuild + curPage + "*"]), {
         relative: true,
         name: 'pagecss',
         addPrefix: staticsource
@@ -139,7 +137,7 @@ function insertStatic() {
 }
 
 gulp.task("clean", function () {
-    return gulp.src(basePath.build, {read: false}).pipe(clean());
+    return gulp.src("."+basePath.build, {read: false}).pipe(clean());
 
 });
 gulp.task("move", ["clean"], function () {
@@ -164,40 +162,41 @@ gulp.task('build', ['concat'], function () {
     });
 });
 
-gulp.task("server", function () {
+gulp.task("server", ['build'], function () {
     if (!config.startServer) return;
     connect.server({
-        port: 8003,
+        port: config.port,
         root: "",
         livereload: true,
         addRootSlash: false
     });
     var open = require('open');
-    open('http://127.0.0.1:8003/build/develop/' + curPage);
+    open('http://127.0.0.1:'+config.port+basePath.build + curPage);
 });
-gulp.task("watch", function () {
-    gulp.run('server');
-    gulp.run('build');
-    var staticSrc = [basePath.pagesrc + curPage + '/*', basePath.pagesrc + curPage + '/**/*', basePath.pagesrc + curPage + '/**/**/*'];
-    var commonSrc = [basePath.commonsrc + '/*', basePath.commonsrc + '/**/*', basePath.commonsrc + '/**/**/*'];
+gulp.task("watch", ['server'], function () {
+    var staticSrc = ["."+basePath.pagesrc + curPage + '/*', "."+basePath.pagesrc + curPage + '/**/*', "."+basePath.pagesrc + curPage + '/**/**/*'];
+    var commonSrc = ["."+basePath.commonsrc + '/*', "."+basePath.commonsrc + '/**/*', "."+basePath.commonsrc + '/**/**/*'];
     gulp.watch(staticSrc.concat(commonSrc), function () {
         gulp.run('reload');
     });
+
+});
+gulp.task("watch2", ['server'], function () {
 
 });
 gulp.task('reload', ['build'], function () {
     reloadPage(curPage);
 });
 function newPage(pageName) {
-    var fileToMove = ["./src/pages/_example/*", "./src/pages/_example/**/*"];
-    return gulp.src(fileToMove).pipe(gulp.dest('./src/pages/' + pageName));
+    var fileToMove = ["."+basePath.example+"*", "."+basePath.example+"**/*"];
+    return gulp.src(fileToMove).pipe(gulp.dest('.'+basePath.pagesrc + pageName));
 }
 gulp.task('new', function () {
     var pageName = argv.name;
     if (!pageName) {
         for (var i = 0, l = pages.length; i < l; i++) {
             pageName = pages[i];
-            var fileurl = './src/pages/' + pageName;
+            var fileurl = '.'+basePath.pagesrc + pageName;
             path.exists(fileurl, function (exists) {
                 if (!exists) {
                     newPage(pageName);

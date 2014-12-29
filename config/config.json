@@ -7,11 +7,13 @@
   "buildMode": 1,
   "packPreviewMode": "compress",
   "path": {
-    "pagesrc": "./src/pages/",
-    "commonsrc": "./src/common/",
-    "staticbuild":"./build/develop/static/",
-    "build":"./build/develop/"
+    "pagesrc": "/src/pages/",
+    "commonsrc": "/src/common/",
+    "staticbuild":"/build/product/static/",
+    "build":"/build/product/",
+    "example":"/src/pages/_example/"
   },
   "startServer":1,
-  "developPage":"index"
+  "developPage":"index",
+  "port":"8003"
 }
