@@ -8,10 +8,10 @@
   "packPreviewMode": "compress",
   "path": {
     "pagesrc": "./src/pages/",
-    "pagebuild": "./build/develop/pages/",
     "commonsrc": "./src/common/",
-    "commonbuild": "./build/develop/common/"
+    "staticbuild":"./build/develop/static/",
+    "build":"./build/develop/"
   },
   "startServer":1,
-  "developPage":"test"
+  "developPage":"index"
 }

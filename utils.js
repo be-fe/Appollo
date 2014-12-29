@@ -18,8 +18,8 @@ module.exports = {
     },
     replaceQuotes: function (text) {
         text = text
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
+        .replace(/"/g, '\"')
+        .replace(/'/g, '\'')
         .replace(/[\n\r\t]/g, '');
         return text;
     }

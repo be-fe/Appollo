@@ -92,14 +92,14 @@ function getURLList(type, page) {
     if (type == 'html') {
         return {
             pagesrc:   basePath.pagesrc + page + "/index.html",
-            pagebuild: basePath.pagebuild + page + "/"
+            pagebuild: basePath.build + page + "/"
         }
     }
     var urls = {
         pagesrc:     basePath.pagesrc + page + "/" + type + "/*",
-        pagebuild:   basePath.pagebuild + page + "/" + type + "/",
+        pagebuild:   basePath.staticbuild+ "/" + type + "/",
         commonsrc:   basePath.commonsrc + type + "/*",
-        commonbuild: basePath.commonbuild + type + "/"
+        commonbuild: basePath.staticbuild + type + "/"
     }
     return urls;
 }
@@ -119,25 +119,32 @@ function concatFile(type, pageurl) {
 
 }
 function insertStatic() {
-    return gulp.src(htmlurl.pagebuild + "index.html").pipe(inject(gulp.src([jsurl.pagebuild + "*.js"]), {
+    return gulp.src(htmlurl.pagebuild + "index.html").pipe(inject(gulp.src([jsurl.pagebuild + "main*"]), {
         relative: true,
         name: 'pagejs',
         addPrefix: staticsource
-    })).pipe(inject(gulp.src([jsurl.commonbuild + "*.js"]), {
+    })).pipe(inject(gulp.src([jsurl.commonbuild + "base*"]), {
         relative: true,
         name: 'basejs',
         addPrefix: staticsource
-    })).pipe(inject(gulp.src([cssurl.pagebuild + "*.css"]), {
+    })).pipe(inject(gulp.src([cssurl.pagebuild + "main*"]), {
         relative: true,
         name: 'pagecss',
         addPrefix: staticsource
-    })).pipe(inject(gulp.src([cssurl.commonbuild + "*.css"]), {
+    })).pipe(inject(gulp.src([cssurl.commonbuild + "base*"]), {
         relative: true,
         name: 'basecss',
         addPrefix: staticsource
     })).pipe(gulp.dest(htmlurl.pagebuild));
 }
 
+gulp.task("clean", function () {
+    return gulp.src(basePath.build, {read: false}).pipe(clean());
+
+});
+gulp.task("move", ["clean"], function () {
+    return gulp.src(htmlurl.pagesrc).pipe(gulp.dest(htmlurl.pagebuild));
+});
 gulp.task('concat', ['move'], function () {
     console.log('concat');
     return merge(
@@ -155,18 +162,6 @@ gulp.task('build', ['concat'], function () {
         imgurl: imgurl,
         htmlurl: htmlurl
     });
-});
-gulp.task("clean", function () {
-    var page = curPage;
-    var pageUrl = basePath.pagebuild + page;
-    var stream1 = gulp.src(basePath.commonbuild, {read: false}).pipe(clean());
-    var stream2 = gulp.src(pageUrl, {read: false}).pipe(clean());
-    return merge(stream1, stream2);
-});
-gulp.task("move", ["clean"], function () {
-    var page = curPage;
-    var htmlurl = getURLList('html', page);
-    return gulp.src(htmlurl.pagesrc).pipe(gulp.dest(htmlurl.pagebuild));
 });
 
 gulp.task("server", function () {
@@ -195,7 +190,7 @@ gulp.task('reload', ['build'], function () {
 });
 function newPage(pageName) {
     var fileToMove = ["./src/pages/_example/*", "./src/pages/_example/**/*"];
-    gulp.src(fileToMove).pipe(gulp.dest('./src/pages/' + pageName));
+    return gulp.src(fileToMove).pipe(gulp.dest('./src/pages/' + pageName));
 }
 gulp.task('new', function () {
     var pageName = argv.name;

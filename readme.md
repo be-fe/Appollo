@@ -24,7 +24,7 @@
         
         build/（编译后的路径）
         
-                common/（通用代码及图片，跨项目使用）
+                static/（静态文件）
                 
                         css/
                         
@@ -32,17 +32,8 @@
                         
                         js/
                         
-                pages/（存放项目的代码，一个page为一个项目
-                
-                        index/
-                        
-                                css/
-                                
-                                imgs/
-                                
-                                js/
-                                
-                                index.html
+                index/（存放项目的代码，index为一个项目
+                        index.html
                                 
         src（开发路径）
         
@@ -76,6 +67,8 @@
 ##使用gulp new --name erp
         可以创建一个新项目erp,也可以通过config中配置pages，然后通过gulp new进行多项文件夹创建
 
-##使用gulp watch 可以编译开发环境并进行预览
+##使用gulp build 进行代码编译
+
+##使用gulp watch 可以编译开发环境并进行预览，当前开发项目通过config.json的developPage指定，同时修改时浏览器会自动跟新
 
 ##通过config.json配置相关参数
