@@ -173,7 +173,7 @@ gulp.task("server", function () {
         addRootSlash: false
     });
     var open = require('open');
-    open('http://127.0.0.1:8003/build/develop/pages/' + curPage);
+    open('http://127.0.0.1:8003/build/develop/' + curPage);
 });
 gulp.task("watch", function () {
     gulp.run('server');
