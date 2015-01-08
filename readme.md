@@ -1,21 +1,16 @@
-##Mobile Framework
-#传统开发方式弊端：
+##Appollo Framework
+此框架用于完成项目框架，项目构建，统计监控等,基于gulp实现，目前还在开发中
+###已完成的功能：
+- 脚手架快速创建新项目
+- 代码压缩合并
+- 为静态文件添加hash值，防止浏览器缓存
+- 修改后自动刷新页面
 
-        每次开发都得新建文件夹目录
-        
-        目录结构组织不够合理
-        
-        需通过gulp或者grunt代码合并压缩工具
-        
-        手动引入静态资源，并且未能生成时间戳，上线时可能因为缓存而导致线上bug
-        
-        修改完后得手动进行浏览器刷新才能看到修改效果
-        
-        html结构与js代码混在一起，不便于看清结构
+###待开发功能：
+- weiner的自动注入，二维码扫描，方便移动端开发
+- 组件化支持
 
-#此框架解决以上问题，并构建基本的js框架，以及统计监控等,基于gulp实现，目前还在开发中
-
-#目录结构为：
+###自动生成的项目目录结构：
 
         config/
                 config.json(项目配置文件)
@@ -62,13 +57,17 @@
                                 index.html
                                 
 
-#使用方法：
+###使用方法：
 
-##使用gulp new --name erp
-        可以创建一个新项目erp,也可以通过config中配置pages，然后通过gulp new进行多项文件夹创建
+####创建新项目
+        $ gulp new --name erp
+这样就创建了一个名为erp的新项目,也可以通过config中配置pages，然后通过gulp new进行多项文件夹创建。
 
-##使用gulp build 进行代码编译
+####代码合并&压缩&添加hash值
+        $ gulp build 
 
-##使用gulp watch 可以编译开发环境并进行预览，当前开发项目通过config.json的developPage指定，同时修改时浏览器会自动跟新
+####实时监控
+        $ gulp watch
+使用gulp watch 可以编译开发环境并进行预览，当前开发项目通过config.json的developPage指定，同时修改时浏览器会自动更新。
 
-##通过config.json配置相关参数
+###通过config.json配置相关参数
