@@ -89,7 +89,7 @@ function parsePath(path) {
 function getURLList(type, page) {
     if (type == 'html') {
         return {
-            pagesrc:   "." + basePath.pagesrc + page + "/index.html",
+            pagesrc:   "." + basePath.pagesrc + page + "/*",
             pagebuild: "." + basePath.build + page + "/"
         }
     }
@@ -141,6 +141,7 @@ gulp.task("clean", function () {
 
 });
 gulp.task("move", ["clean"], function () {
+    console.log(htmlurl.pagesrc);
     return gulp.src(htmlurl.pagesrc).pipe(gulp.dest(htmlurl.pagebuild));
 });
 gulp.task('concat', ['move'], function () {
@@ -171,7 +172,7 @@ gulp.task("server", ['build'], function () {
         addRootSlash: false
     });
     var open = require('open');
-    open('http://127.0.0.1:'+config.port+basePath.build + curPage);
+    open('http://127.0.0.1:' + config.port + basePath.build + curPage);
 });
 gulp.task("watch", ['server'], function () {
     var staticSrc = ["."+basePath.pagesrc + curPage + '/*', "."+basePath.pagesrc + curPage + '/**/*', "."+basePath.pagesrc + curPage + '/**/**/*'];
