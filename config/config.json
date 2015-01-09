@@ -9,11 +9,13 @@
   "path": {
     "pagesrc": "/src/pages/",
     "commonsrc": "/src/common/",
-    "staticbuild":"/build/product/static/",
-    "build":"/build/product/",
-    "example":"/src/pages/_example/"
+    "proStatic": "/build/product/static/",
+    "devStatic": "/build/develop/static/",
+    "production": "/build/product/",
+    "develop": "/build/develop/",
+    "example": "/src/pages/_example/"
   },
-  "startServer":1,
-  "developPage":"index",
-  "port":"8003"
+  "startServer": 1,
+  "developPage": "index",
+  "port": "8003"
 }
