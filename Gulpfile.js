@@ -123,7 +123,7 @@ function concatFile(type, pageurl) {
 }
 
 function insertStatic() {
-    if (env == "production") {
+    if (env === 'production') {
         return gulp.src(htmlurl.pagebuild + "*.html").pipe(inject(gulp.src([jsurl.pagebuild + curPage + "*"]), {
             relative: true,
             name: 'pagejs',
@@ -142,8 +142,9 @@ function insertStatic() {
             addPrefix: staticsource
         })).pipe(gulp.dest(htmlurl.pagebuild));
     }
-    else{
-        return gulp.src(htmlurl.pagebuild + "*.html").pipe(inject(gulp.src([jsurl.pagebuild + curPage + "*"]), {
+    else {
+        // console.log(jsurl.commonbuild + "base*")
+        return gulp.src(htmlurl.pagebuild + "*.html").pipe(inject(gulp.src(["." + pagePath + curPage + "/js/*.js"]), {
             relative: true,
             name: 'pagejs',
             addPrefix: staticsource
@@ -151,7 +152,7 @@ function insertStatic() {
             relative: true,
             name: 'basejs',
             addPrefix: staticsource
-        })).pipe(inject(gulp.src([cssurl.pagebuild + curPage + "*"]), {
+        })).pipe(inject(gulp.src(["." + pagePath + curPage + "/css/*.css"]), {
             relative: true,
             name: 'pagecss',
             addPrefix: staticsource
